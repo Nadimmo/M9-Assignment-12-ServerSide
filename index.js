@@ -26,9 +26,15 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
+    const CollectionOfCreateSurverys = client.db("SurverysAppDB").collection('CreateSurverysDB')
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+    app.post('/surverys/create', async(req,res)=>{
+        const surverys = req.body
+        const result = await CollectionOfCreateSurverys.insertOne(surverys)
+        res.send(result)
+    })
 
 
 

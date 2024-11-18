@@ -48,6 +48,27 @@ async function run() {
         res.send(result)
     })
 
+    app.put("/surverys/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedSurvey = req.body;
+    
+      try {
+        const result = await CollectionOfCreateSurverys.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedSurvey }
+        );
+    
+        if (result.modifiedCount > 0) {
+          res.status(200).json({ message: "Survey updated successfully" });
+        } else {
+          res.status(404).json({ message: "Survey not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ message: "Error updating survey", error });
+      }
+    });
+    
+
 
 
     // Send a ping to confirm a successful connection

@@ -31,6 +31,8 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+
+    // survey related & update related api
     app.post("/surverys/create", async (req, res) => {
       const surverys = req.body;
       const result = await CollectionOfCreateSurverys.insertOne(surverys);
@@ -77,7 +79,52 @@ async function run() {
           .json({ message: "An error occurred while updating the survey." });
       }
     });
-    
+
+    // Featured Surveys - Top 6 by votes
+    app.get("/featured", async (req, res) => {
+      try {
+        const result = await CollectionOfCreateSurverys.aggregate([
+          {
+            $addFields: {
+              totalVotes: {
+                $sum: {
+                  $map: {
+                    input: "$questions",
+                    as: "question",
+                    in: {
+                      $sum: {
+                        $objectToArray: "$$question.options",
+                      }.v,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          { $sort: { totalVotes: -1 } }, // Sort by total votes descending
+          { $limit: 6 }, // Limit to top 6
+        ]).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching featured surveys:", error);
+        res.status(500).json({ message: "Error fetching featured surveys." });
+      }
+    });
+
+    // Latest Surveys - Top 6 by creation date
+    app.get("/latest", async (req, res) => {
+      try {
+        const result = await CollectionOfCreateSurverys.find()
+          .sort({ _id: -1 }) // Sort by creation date descending (MongoDB's _id includes timestamp)
+          .limit(6)
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching latest surveys:", error);
+        res.status(500).json({ message: "Error fetching latest surveys." });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(

@@ -25,12 +25,30 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  const CollectionOfCreateSurverys = client
-    .db("SurverysAppDB")
-    .collection("CreateSurverysDB");
+  const CollectionOfCreateSurverys = client.db("SurverysAppDB").collection("CreateSurverysDB");
+  const CollectionOfUsers = client.db("SurverysAppDB").collection("UsersDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+
+    // user related api
+    app.post('/users', async(req,res)=>{
+      const user = req.body
+      const filter = {email: user.email}
+      const exiting = await CollectionOfUsers.findOne(filter)
+      if(exiting){
+        return res.send({message: 'user already exit'})
+      }
+      const result = await CollectionOfUsers.insertOne(exiting)
+      res.send(result)
+    })
+
+    // show user related api
+    app.get("/users",  async (req, res) => {
+      const user = req.body;
+      const result = await CollectionOfUsers.find(user).toArray();
+      res.send(result);
+    });
 
     // survey related & update related api
     app.post("/surverys/create", async (req, res) => {

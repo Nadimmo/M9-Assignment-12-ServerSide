@@ -39,7 +39,7 @@ async function run() {
       if(exiting){
         return res.send({message: 'user already exit'})
       }
-      const result = await CollectionOfUsers.insertOne(exiting)
+      const result = await CollectionOfUsers.insertOne(user)
       res.send(result)
     })
 
@@ -49,6 +49,13 @@ async function run() {
       const result = await CollectionOfUsers.find(user).toArray();
       res.send(result);
     });
+
+    app.get('/users/:id', async(req,res)=>{
+      const Id = req.params.id
+      const userId = {_id: new ObjectId(Id)}
+      const result = await CollectionOfUsers.findOne(userId)
+      res.send(result)
+    })
 
     // survey related & update related api
     app.post("/surverys/create", async (req, res) => {

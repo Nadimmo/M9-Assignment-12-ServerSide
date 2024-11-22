@@ -27,6 +27,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const CollectionOfCreateSurverys = client.db("SurverysAppDB").collection("CreateSurverysDB");
   const CollectionOfUsers = client.db("SurverysAppDB").collection("UsersDB");
+  const CollectionOfSurveyorReport = client.db("SurverysAppDB").collection("ReportDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -63,6 +64,26 @@ async function run() {
       const result = await CollectionOfCreateSurverys.insertOne(surverys);
       res.send(result);
     });
+
+    // surveyor report related api
+    app.post('/reports', async(req,res)=>{
+      const report = req.body
+      const result = await CollectionOfSurveyorReport.insertOne(report)
+      res.send(result)
+    })
+
+    // show surveyor reports related api
+    app.get('/reports', async(req,res)=>{
+      const result = await CollectionOfSurveyorReport.find().toArray()
+      res.send(result)
+    })
+
+    app.get('/reports/:id', async(req,res)=>{
+      const Id = req.params.id
+      const reportId = {_id: new ObjectId(Id)}
+      const result = await CollectionOfSurveyorReport.findOne(reportId)
+      res.send(result)
+    })
 
     // // show all surveys
     app.get("/surverys", async (req, res) => {

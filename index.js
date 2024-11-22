@@ -43,7 +43,7 @@ async function run() {
       res.send(result)
     })
 
-    // show user related api
+    // show all user related api
     app.get("/users",  async (req, res) => {
       const user = req.body;
       const result = await CollectionOfUsers.find(user).toArray();
@@ -64,11 +64,21 @@ async function run() {
       res.send(result);
     });
 
+    // // show all surveys
     app.get("/surverys", async (req, res) => {
       const result = await CollectionOfCreateSurverys.find().toArray();
       res.send(result);
     });
 
+     // show survey by email
+     app.get('/survey', async(req,res)=>{
+      const user = req.query.email
+      const filter = {email: user}
+      const result = await CollectionOfCreateSurverys.find(filter).toArray()
+      res.send(result)
+    })
+
+  
     app.get("/surverys/:id", async (req, res) => {
       const surveyId = req.params.id;
       const filter = { _id: new ObjectId(surveyId) };
@@ -76,6 +86,7 @@ async function run() {
       res.send(result);
     });
 
+    // update vote
     app.put("/surverys/:id", async (req, res) => {
       const surveyId = req.params.id;
       const updatedVotes = req.body.questions[0].options;

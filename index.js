@@ -28,6 +28,7 @@ async function run() {
   const CollectionOfCreateSurverys = client.db("SurverysAppDB").collection("CreateSurverysDB");
   const CollectionOfUsers = client.db("SurverysAppDB").collection("UsersDB");
   const CollectionOfSurveyorReport = client.db("SurverysAppDB").collection("ReportDB");
+  const CollectionOfContact = client.db("SurverysAppDB").collection("ContactUsDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -181,6 +182,13 @@ async function run() {
         res.status(500).json({ message: "Error fetching latest surveys." });
       }
     });
+
+    //  contact form related api
+    app.post('/contact', async(req,res)=>{
+      const user = req.body
+      const result = await CollectionOfContact.insertOne(user)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

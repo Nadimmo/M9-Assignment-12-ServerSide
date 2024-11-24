@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+var jwt = require("jsonwebtoken");
 const app = express();
 const dotenv = require("dotenv");
 dotenv.config();
@@ -44,6 +45,20 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+    // middleware
+    const verifyToken = async (req, res, next) => {
+      if (!req.headers.authorization) {
+        res.status(401).send({ message: "unAuthorize Access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decode) => {
+        if (err) {
+          res.status(401).send({ message: "unAuthorize Access" });
+        }
+        req.decode = decode;
+        next();
+      });
+    };
 
     // user related api
     app.post("/users", async (req, res) => {
@@ -72,19 +87,19 @@ async function run() {
     });
 
     // surveyor report related api
-    app.post("/reports", async (req, res) => {
+    app.post("/reports",  async (req, res) => {
       const report = req.body;
       const result = await CollectionOfSurveyorReport.insertOne(report);
       res.send(result);
     });
 
     // show surveyor reports related api
-    app.get("/reports", async (req, res) => {
+    app.get("/reports",  async (req, res) => {
       const result = await CollectionOfSurveyorReport.find().toArray();
       res.send(result);
     });
 
-    app.get("/reports/:id", async (req, res) => {
+    app.get("/reports/:id",  async (req, res) => {
       const Id = req.params.id;
       const reportId = { _id: new ObjectId(Id) };
       const result = await CollectionOfSurveyorReport.findOne(reportId);
@@ -92,19 +107,19 @@ async function run() {
     });
 
     // survey create  related api
-    app.post("/surverys/create", async (req, res) => {
+    app.post("/surverys/create", verifyToken, async (req, res) => {
       const surverys = req.body;
       const result = await CollectionOfCreateSurverys.insertOne(surverys);
       res.send(result);
     });
 
     // // show all surveys
-    app.get("/surverys", async (req, res) => {
+    app.get("/surverys",  async (req, res) => {
       const result = await CollectionOfCreateSurverys.find().toArray();
       res.send(result);
     });
 
-    app.get("/surverys/:id", async (req, res) => {
+    app.get("/surverys/:id",  async (req, res) => {
       const surveyId = req.params.id;
       const filter = { _id: new ObjectId(surveyId) };
       const result = await CollectionOfCreateSurverys.findOne(filter);
@@ -112,14 +127,14 @@ async function run() {
     });
 
     // show survey by email
-    app.get("/survey", async (req, res) => {
+    app.get("/survey",  async (req, res) => {
       const user = req.query.email;
       const filter = { email: user };
       const result = await CollectionOfCreateSurverys.find(filter).toArray();
       res.send(result);
     });
 
-    app.get("/survey/:id", async (req, res) => {
+    app.get("/survey/:id",  async (req, res) => {
       const surveyId = req.params.id;
       const filter = { _id: new ObjectId(surveyId) };
       const result = await CollectionOfCreateSurverys.findOne(filter);
@@ -127,7 +142,7 @@ async function run() {
     });
 
     // survey update related api
-    app.patch("/survey/:id", async (req, res) => {
+    app.patch("/survey/:id",  async (req, res) => {
       const survey = req.body;
       const surveyId = req.params.id;
       const filter = { _id: new ObjectId(surveyId) };
@@ -153,7 +168,7 @@ async function run() {
     });
 
     // update vote
-    app.put("/surverys/:id", async (req, res) => {
+    app.put("/surverys/:id",  async (req, res) => {
       const surveyId = req.params.id;
       const updatedVotes = req.body.questions[0].options;
 
@@ -228,28 +243,20 @@ async function run() {
     });
 
     //  contact form related api
-    app.post("/contact", async (req, res) => {
+    app.post("/contact",  async (req, res) => {
       const user = req.body;
       const result = await CollectionOfContact.insertOne(user);
       res.send(result);
     });
 
     //creating Token
-    app.post("/jwt",  async (req, res) => {
+    app.post("/jwt", async (req, res) => {
       const user = req.body;
-      console.log("user for token", user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
-
-      res.cookie("token", token, cookieOptions).send({ success: true });
-    });
-
-    //clearing Token
-    app.post("/logout", async (req, res) => {
-      const user = req.body;
-      console.log("logging out", user);
-      res
-        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
-        .send({ success: true });
+      // console.log(user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
     });
 
     // Send a ping to confirm a successful connection

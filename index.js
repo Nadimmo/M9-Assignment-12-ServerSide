@@ -59,12 +59,6 @@ async function run() {
       res.send(result)
     })
 
-    // survey related & update related api
-    app.post("/surverys/create", async (req, res) => {
-      const surverys = req.body;
-      const result = await CollectionOfCreateSurverys.insertOne(surverys);
-      res.send(result);
-    });
 
     // surveyor report related api
     app.post('/reports', async(req,res)=>{
@@ -86,9 +80,23 @@ async function run() {
       res.send(result)
     })
 
+    // survey create  related api
+    app.post("/surverys/create", async (req, res) => {
+      const surverys = req.body;
+      const result = await CollectionOfCreateSurverys.insertOne(surverys);
+      res.send(result);
+    });
+
     // // show all surveys
     app.get("/surverys", async (req, res) => {
       const result = await CollectionOfCreateSurverys.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/surverys/:id", async (req, res) => {
+      const surveyId = req.params.id;
+      const filter = { _id: new ObjectId(surveyId) };
+      const result = await CollectionOfCreateSurverys.findOne(filter);
       res.send(result);
     });
 
@@ -100,13 +108,36 @@ async function run() {
       res.send(result)
     })
 
-  
-    app.get("/surverys/:id", async (req, res) => {
+    app.get("/survey/:id", async (req, res) => {
       const surveyId = req.params.id;
       const filter = { _id: new ObjectId(surveyId) };
       const result = await CollectionOfCreateSurverys.findOne(filter);
       res.send(result);
     });
+    
+     // survey update related api
+     app.patch('/survey/:id', async(req,res)=>{
+      const survey  = req.body
+      const surveyId = req.params.id
+      const filter = {_id: new ObjectId(surveyId)}
+      const options = { upsert: true }
+      const updatedVotes = survey.questions || [];
+      const updateDoc = {
+        $set:{
+          title: survey.title,
+          description: survey.description,
+          deadline: survey.deadline,
+          category: survey.category,
+          questions: updatedVotes
+        }
+      }
+
+      console.log(updateDoc)
+      console.log(updatedVotes)
+      const result = await CollectionOfCreateSurverys.updateOne(filter, updateDoc, options)
+      res.send(result)
+
+    })
 
     // update vote
     app.put("/surverys/:id", async (req, res) => {
@@ -137,6 +168,8 @@ async function run() {
           .json({ message: "An error occurred while updating the survey." });
       }
     });
+
+   
 
     // Featured Surveys - Top 6 by votes
     app.get("/featured", async (req, res) => {

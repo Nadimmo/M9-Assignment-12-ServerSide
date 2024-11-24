@@ -120,8 +120,8 @@ async function run() {
       const survey  = req.body
       const surveyId = req.params.id
       const filter = {_id: new ObjectId(surveyId)}
-      const options = { upsert: true }
-      const updatedVotes = survey.questions || [];
+      // Ensure `questions` is an array
+      const updatedVotes = Array.isArray(survey.questions) ? survey.questions : [];
       const updateDoc = {
         $set:{
           title: survey.title,
@@ -132,9 +132,7 @@ async function run() {
         }
       }
 
-      console.log(updateDoc)
-      console.log(updatedVotes)
-      const result = await CollectionOfCreateSurverys.updateOne(filter, updateDoc, options)
+      const result = await CollectionOfCreateSurverys.updateOne(filter, updateDoc)
       res.send(result)
 
     })

@@ -12,6 +12,12 @@ app.use(
   })
 );
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rrkijcq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -25,60 +31,65 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  const CollectionOfCreateSurverys = client.db("SurverysAppDB").collection("CreateSurverysDB");
+  const CollectionOfCreateSurverys = client
+    .db("SurverysAppDB")
+    .collection("CreateSurverysDB");
   const CollectionOfUsers = client.db("SurverysAppDB").collection("UsersDB");
-  const CollectionOfSurveyorReport = client.db("SurverysAppDB").collection("ReportDB");
-  const CollectionOfContact = client.db("SurverysAppDB").collection("ContactUsDB");
+  const CollectionOfSurveyorReport = client
+    .db("SurverysAppDB")
+    .collection("ReportDB");
+  const CollectionOfContact = client
+    .db("SurverysAppDB")
+    .collection("ContactUsDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
     // user related api
-    app.post('/users', async(req,res)=>{
-      const user = req.body
-      const filter = {email: user.email}
-      const exiting = await CollectionOfUsers.findOne(filter)
-      if(exiting){
-        return res.send({message: 'user already exit'})
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const exiting = await CollectionOfUsers.findOne(filter);
+      if (exiting) {
+        return res.send({ message: "user already exit" });
       }
-      const result = await CollectionOfUsers.insertOne(user)
-      res.send(result)
-    })
+      const result = await CollectionOfUsers.insertOne(user);
+      res.send(result);
+    });
 
     // show all user related api
-    app.get("/users",  async (req, res) => {
+    app.get("/users", async (req, res) => {
       const user = req.body;
       const result = await CollectionOfUsers.find(user).toArray();
       res.send(result);
     });
 
-    app.get('/users/:id', async(req,res)=>{
-      const Id = req.params.id
-      const userId = {_id: new ObjectId(Id)}
-      const result = await CollectionOfUsers.findOne(userId)
-      res.send(result)
-    })
-
+    app.get("/users/:id", async (req, res) => {
+      const Id = req.params.id;
+      const userId = { _id: new ObjectId(Id) };
+      const result = await CollectionOfUsers.findOne(userId);
+      res.send(result);
+    });
 
     // surveyor report related api
-    app.post('/reports', async(req,res)=>{
-      const report = req.body
-      const result = await CollectionOfSurveyorReport.insertOne(report)
-      res.send(result)
-    })
+    app.post("/reports", async (req, res) => {
+      const report = req.body;
+      const result = await CollectionOfSurveyorReport.insertOne(report);
+      res.send(result);
+    });
 
     // show surveyor reports related api
-    app.get('/reports', async(req,res)=>{
-      const result = await CollectionOfSurveyorReport.find().toArray()
-      res.send(result)
-    })
+    app.get("/reports", async (req, res) => {
+      const result = await CollectionOfSurveyorReport.find().toArray();
+      res.send(result);
+    });
 
-    app.get('/reports/:id', async(req,res)=>{
-      const Id = req.params.id
-      const reportId = {_id: new ObjectId(Id)}
-      const result = await CollectionOfSurveyorReport.findOne(reportId)
-      res.send(result)
-    })
+    app.get("/reports/:id", async (req, res) => {
+      const Id = req.params.id;
+      const reportId = { _id: new ObjectId(Id) };
+      const result = await CollectionOfSurveyorReport.findOne(reportId);
+      res.send(result);
+    });
 
     // survey create  related api
     app.post("/surverys/create", async (req, res) => {
@@ -100,13 +111,13 @@ async function run() {
       res.send(result);
     });
 
-     // show survey by email
-     app.get('/survey', async(req,res)=>{
-      const user = req.query.email
-      const filter = {email: user}
-      const result = await CollectionOfCreateSurverys.find(filter).toArray()
-      res.send(result)
-    })
+    // show survey by email
+    app.get("/survey", async (req, res) => {
+      const user = req.query.email;
+      const filter = { email: user };
+      const result = await CollectionOfCreateSurverys.find(filter).toArray();
+      res.send(result);
+    });
 
     app.get("/survey/:id", async (req, res) => {
       const surveyId = req.params.id;
@@ -114,28 +125,32 @@ async function run() {
       const result = await CollectionOfCreateSurverys.findOne(filter);
       res.send(result);
     });
-    
-     // survey update related api
-     app.patch('/survey/:id', async(req,res)=>{
-      const survey  = req.body
-      const surveyId = req.params.id
-      const filter = {_id: new ObjectId(surveyId)}
+
+    // survey update related api
+    app.patch("/survey/:id", async (req, res) => {
+      const survey = req.body;
+      const surveyId = req.params.id;
+      const filter = { _id: new ObjectId(surveyId) };
       // Ensure `questions` is an array
-      const updatedVotes = Array.isArray(survey.questions) ? survey.questions : [];
+      const updatedVotes = Array.isArray(survey.questions)
+        ? survey.questions
+        : [];
       const updateDoc = {
-        $set:{
+        $set: {
           title: survey.title,
           description: survey.description,
           deadline: survey.deadline,
           category: survey.category,
-          questions: updatedVotes
-        }
-      }
+          questions: updatedVotes,
+        },
+      };
 
-      const result = await CollectionOfCreateSurverys.updateOne(filter, updateDoc)
-      res.send(result)
-
-    })
+      const result = await CollectionOfCreateSurverys.updateOne(
+        filter,
+        updateDoc
+      );
+      res.send(result);
+    });
 
     // update vote
     app.put("/surverys/:id", async (req, res) => {
@@ -166,8 +181,6 @@ async function run() {
           .json({ message: "An error occurred while updating the survey." });
       }
     });
-
-   
 
     // Featured Surveys - Top 6 by votes
     app.get("/featured", async (req, res) => {
@@ -215,11 +228,29 @@ async function run() {
     });
 
     //  contact form related api
-    app.post('/contact', async(req,res)=>{
-      const user = req.body
-      const result = await CollectionOfContact.insertOne(user)
-      res.send(result)
-    })
+    app.post("/contact", async (req, res) => {
+      const user = req.body;
+      const result = await CollectionOfContact.insertOne(user);
+      res.send(result);
+    });
+
+    //creating Token
+    app.post("/jwt",  async (req, res) => {
+      const user = req.body;
+      console.log("user for token", user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+
+      res.cookie("token", token, cookieOptions).send({ success: true });
+    });
+
+    //clearing Token
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log("logging out", user);
+      res
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+        .send({ success: true });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

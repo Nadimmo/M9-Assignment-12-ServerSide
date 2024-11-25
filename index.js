@@ -107,17 +107,19 @@ async function run() {
       res.send(result);
     });
 
-    // surveyor report related api
-    app.post("/reports",  async (req, res) => {
+    // surveyor report by which user report and show ui related api
+    app.post("/reports", verifyToken, async (req, res) => {
       const report = req.body;
       const result = await CollectionOfSurveyorReport.insertOne(report);
       res.send(result);
     });
 
     // show surveyor reports related api
-    app.get("/reports", verifyToken,  async (req, res) => {
-      const result = await CollectionOfSurveyorReport.find().toArray();
-      res.send(result);
+    app.get("/reports",   async (req, res) => {
+      const user = req.query.email
+      const query = {email: user}
+      const result = await CollectionOfSurveyorReport.find(query).toArray()
+      res.send(result)
     });
 
     app.get("/reports/:id",  async (req, res) => {

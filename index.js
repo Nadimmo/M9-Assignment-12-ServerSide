@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 var jwt = require("jsonwebtoken");
 const app = express();
+const stripe = require("stripe")(
+  "sk_test_51PZmx2Ro2enkpQYdV1PdzTYYwEUam2XGqbWAnEE7CMUqysztVSfp9NBAoOfzNY5yEx1M04oMWAV5Q0THnhvi1M6500w8osQPgZ"
+);
 const dotenv = require("dotenv");
 dotenv.config();
 const port = process.env.PORT || 5000;
@@ -42,23 +45,41 @@ async function run() {
   const CollectionOfContact = client
     .db("SurverysAppDB")
     .collection("ContactUsDB");
+  const CollectionOfPayments = client
+    .db("SurverysAppDB")
+    .collection("PaymentsDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+     //creating Token
+     app.post("/jwt",  async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
+
+
     // middleware
     const verifyToken = async (req, res, next) => {
+      // console.log(req.headers.authorization.split(" ")[1])
       if (!req.headers.authorization) {
         res.status(401).send({ message: "unAuthorize Access" });
       }
       const token = req.headers.authorization.split(" ")[1];
-      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decode) => {
+      // console.log('tok  tok token', token)
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
           res.status(401).send({ message: "unAuthorize Access" });
         }
-        req.decode = decode;
+        req.decoded = decoded;
         next();
       });
     };
+
+    
 
     // user related api
     app.post("/users", async (req, res) => {
@@ -73,7 +94,7 @@ async function run() {
     });
 
     // show all user related api
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       const user = req.body;
       const result = await CollectionOfUsers.find(user).toArray();
       res.send(result);
@@ -94,7 +115,7 @@ async function run() {
     });
 
     // show surveyor reports related api
-    app.get("/reports",  async (req, res) => {
+    app.get("/reports", verifyToken,  async (req, res) => {
       const result = await CollectionOfSurveyorReport.find().toArray();
       res.send(result);
     });
@@ -107,14 +128,14 @@ async function run() {
     });
 
     // survey create  related api
-    app.post("/surverys/create", verifyToken, async (req, res) => {
+    app.post("/surverys/create",  async (req, res) => {
       const surverys = req.body;
       const result = await CollectionOfCreateSurverys.insertOne(surverys);
       res.send(result);
     });
 
     // // show all surveys
-    app.get("/surverys",  async (req, res) => {
+    app.get("/surverys", verifyToken,  async (req, res) => {
       const result = await CollectionOfCreateSurverys.find().toArray();
       res.send(result);
     });
@@ -127,7 +148,7 @@ async function run() {
     });
 
     // show survey by email
-    app.get("/survey",  async (req, res) => {
+    app.get("/survey", verifyToken, async (req, res) => {
       const user = req.query.email;
       const filter = { email: user };
       const result = await CollectionOfCreateSurverys.find(filter).toArray();
@@ -249,15 +270,31 @@ async function run() {
       res.send(result);
     });
 
-    //creating Token
-    app.post("/jwt", async (req, res) => {
-      const user = req.body;
-      // console.log(user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h",
+    // ............payment intents related api....................
+
+    app.post("/create-payment-intent",  async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      // console.log("amount", amount);
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
       });
-      res.send({ token });
+
+      res.send({ clientSecret: paymentIntent.client_secret });
     });
+
+     // .........payment related api...........
+     app.post("/payments",  async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await CollectionOfPayments.insertOne(payment);
+      // console.log("payment info", paymentResult);
+
+      res.send(paymentResult);
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

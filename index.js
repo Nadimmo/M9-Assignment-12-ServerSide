@@ -12,7 +12,11 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://assignment-12-6f33b.web.app",
+      "https://assignment-12-6f33b.firebaseapp.com",
+    ],
   })
 );
 
@@ -48,9 +52,7 @@ async function run() {
   const CollectionOfPayments = client
     .db("SurverysAppDB")
     .collection("PaymentsDB");
-  const CollectionOfPrices = client
-    .db("SurverysAppDB")
-    .collection("PriceDB");
+  const CollectionOfPrices = client.db("SurverysAppDB").collection("PriceDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -295,7 +297,6 @@ async function run() {
       const result = await CollectionOfContact.insertOne(user);
       res.send(result);
     });
-    
 
     // ............payment intents related api....................
 
@@ -322,10 +323,10 @@ async function run() {
       res.send(paymentResult);
     });
 
-    app.get('/payments', async(req,res)=>{
-      const result = await CollectionOfPayments.find().toArray()
-      res.send(result)
-    })
+    app.get("/payments", async (req, res) => {
+      const result = await CollectionOfPayments.find().toArray();
+      res.send(result);
+    });
 
     // check admin related api
     app.get("/users/admin/:email", verifyToken, async (req, res) => {
@@ -376,17 +377,22 @@ async function run() {
     );
 
     // Make surverys related api
-    app.patch("/surverys/surveyor/:id", verifyToken, verifySurveyor, async (req, res) => {
-      const surveyId = req.params.id;
-      const filter = { _id: new ObjectId(surveyId) };
-      const updateDoc = {
-        $set: {
-          role: "surveyor",
-        },
-      };
-      const result = await CollectionOfUsers.updateOne(filter, updateDoc);
-      res.send(result);
-    });
+    app.patch(
+      "/surverys/surveyor/:id",
+      verifyToken,
+      verifySurveyor,
+      async (req, res) => {
+        const surveyId = req.params.id;
+        const filter = { _id: new ObjectId(surveyId) };
+        const updateDoc = {
+          $set: {
+            role: "surveyor",
+          },
+        };
+        const result = await CollectionOfUsers.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+    );
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

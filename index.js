@@ -108,7 +108,7 @@ async function run() {
     });
 
     // surveyor report by which user report and show ui related api
-    app.post("/reports", verifyToken, async (req, res) => {
+    app.post("/reports",  async (req, res) => {
       const report = req.body;
       const result = await CollectionOfSurveyorReport.insertOne(report);
       res.send(result);
@@ -296,6 +296,47 @@ async function run() {
 
       res.send(paymentResult);
     });
+
+    // check admin related api
+    app.get('/users/admin/:email', async(req,res)=>{
+      const email = req.params.email 
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query ={email: email}
+      const user = await CollectionOfUsers.findOne(query)
+      const admin = false 
+      if(user){
+        admin = user?.role === "admin"
+      }
+      res.send(admin)
+    })
+
+    // Make admin related api
+    app.patch('/users/admin/:id', async(req,res)=>{
+      const userId = req.params.id 
+      const filter = {_id: new ObjectId(userId)}
+      const updateDoc = {
+        $set:{
+          role: 'admin'
+        }
+      }
+      const result = await CollectionOfUsers.updateOne(filter,updateDoc)
+      res.send(result)
+    })
+
+    // Make surverys related api
+    app.patch('/surverys/admin/:id', async(req,res)=>{
+      const surveyId = req.params.id 
+      const filter = {_id: new ObjectId(surveyId)}
+      const updateDoc = {
+        $set:{
+          role: 'surveyor'
+        }
+      }
+      const result = await CollectionOfUsers.updateOne(filter,updateDoc)
+      res.send(result)
+    })
 
 
     // Send a ping to confirm a successful connection

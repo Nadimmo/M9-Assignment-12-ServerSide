@@ -318,6 +318,11 @@ async function run() {
       res.send(paymentResult);
     });
 
+    app.get('/payments', async(req,res)=>{
+      const result = await CollectionOfPayments.find().toArray()
+      res.send(result)
+    })
+
     // check admin related api
     app.get("/users/admin/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
@@ -326,7 +331,7 @@ async function run() {
       }
       const query = { email: email };
       const user = await CollectionOfUsers.findOne(query);
-      const admin = false;
+      let admin = false;
       if (user) {
         admin = user?.role === "admin";
       }
@@ -341,7 +346,7 @@ async function run() {
       }
       const query = { email: email };
       const user = await CollectionOfUsers.findOne(query);
-      const surveyor = false;
+      let surveyor = false;
       if (user) {
         surveyor = user?.role === "surveyor";
       }

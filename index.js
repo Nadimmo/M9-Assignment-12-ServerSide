@@ -48,6 +48,9 @@ async function run() {
   const CollectionOfPayments = client
     .db("SurverysAppDB")
     .collection("PaymentsDB");
+  const CollectionOfPrices = client
+    .db("SurverysAppDB")
+    .collection("PriceDB");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -292,6 +295,7 @@ async function run() {
       const result = await CollectionOfContact.insertOne(user);
       res.send(result);
     });
+    
 
     // ............payment intents related api....................
 
